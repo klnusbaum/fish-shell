@@ -817,6 +817,33 @@ static wchar_t *wcsdup_fallback(const wchar_t *in)
     return out;
 }
 
+static int wcsncasecmp_fallback(const wchar_t *a, const wchar_t *b, size_t count)
+{
+    for (size_t i=0; i < count; i++)
+    {
+        if (a[i] == 0 && b[i] == 0)
+        {
+            return 0;
+        }
+        else if (a[i] == 0)
+        {
+            return -1;
+        }
+        else if (b[i] == 0)
+        {
+            return 1;
+        }
+        else
+        {
+            int diff = towlower(*a) - towlower(*b);
+            if (diff != 0)
+                return diff;        
+        }
+    }
+    return 0;
+}
+
+
 int wcscasecmp_fallback(const wchar_t *a, const wchar_t *b)
 {
     if (*a == 0)
@@ -864,6 +891,15 @@ int wcscasecmp_use_weak(const wchar_t *a, const wchar_t *b)
     return wcscasecmp_fallback(a, b);
 }
 
+int wcsncasecmp_use_weak(const wchar_t *a, const wchar_t *b, size_t n)
+{
+#if FISH_DARWIN_WEAK_LINKING_SUPPORTED
+    if (wcsncasecmp != NULL)
+        return (wcsncasecmp)(a, b, n);
+#endif
+    return wcsncasecmp_fallback(a, b, n);
+}
+
 #else // ! __APPLE__
 
 #ifndef HAVE_WCSDUP
@@ -894,24 +930,9 @@ size_t wcslen(const wchar_t *in)
 #endif
 
 #ifndef HAVE_WCSNCASECMP
-int wcsncasecmp(const wchar_t *a, const wchar_t *b, int count)
+int wcsncasecmp(const wchar_t *a, const wchar_t *b, size_t n)
 {
-    if (count == 0)
-        return 0;
-
-    if (*a == 0)
-    {
-        return (*b==0)?0:-1;
-    }
-    else if (*b == 0)
-    {
-        return 1;
-    }
-    int diff = towlower(*a)-towlower(*b);
-    if (diff != 0)
-        return diff;
-    else
-        return wcsncasecmp(a+1,b+1, count-1);
+    return wcsncasecmp_fallback(a, b, n);
 }
 #endif
 

@@ -214,13 +214,13 @@ int wcwidth(wchar_t c);
 
     On other platforms, use what's detected at build time.
 */
-#if __APPLE__ && __DARWIN_C_LEVEL >= 200809L
+#if __APPLE__
 wchar_t *wcsdup_use_weak(const wchar_t *);
 int wcscasecmp_use_weak(const wchar_t *, const wchar_t *);
 #define wcsdup(a) wcsdup_use_weak((a))
 #define wcscasecmp(a, b) wcscasecmp_use_weak((a), (b))
 
-#else
+#else // ! __APPLE__
 
 #ifndef HAVE_WCSDUP
 

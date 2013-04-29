@@ -835,23 +835,36 @@ int wcscasecmp_fallback(const wchar_t *a, const wchar_t *b)
 }
 
 
-#if __APPLE__ && __DARWIN_C_LEVEL >= 200809L
+#if __APPLE__
+
+/* Weak linking is supported back to 10.2. However, in order to build and weak link successfully on 10.6, we would need to provide our own declarations of wcsdup and wcscasecmp. This is a little frightening, so we always use fallback implementations there. The upshot is that when building on 10.6, you get a binary that does not weak link, and so will not use the system wcscasecmp when run on 10.7+. This doesn't seem like a big deal.
+
+   __DARWIN_C_LEVEL is one way to detect building on 10.7+; there may be better ways.
+*/
+#if defined(__DARWIN_C_LEVEL) && (__DARWIN_C_LEVEL >= 200809L)
+ #define FISH_DARWIN_WEAK_LINKING_SUPPORTED 1
+#endif
+
 /* Note parens avoid the macro expansion */
 wchar_t *wcsdup_use_weak(const wchar_t *a)
 {
+#if FISH_DARWIN_WEAK_LINKING_SUPPORTED
     if (wcsdup != NULL)
         return (wcsdup)(a);
+#endif
     return wcsdup_fallback(a);
 }
 
 int wcscasecmp_use_weak(const wchar_t *a, const wchar_t *b)
 {
+#if FISH_DARWIN_WEAK_LINKING_SUPPORTED
     if (wcscasecmp != NULL)
         return (wcscasecmp)(a, b);
+#endif
     return wcscasecmp_fallback(a, b);
 }
 
-#else //__APPLE__
+#else // ! __APPLE__
 
 #ifndef HAVE_WCSDUP
 wchar_t *wcsdup(const wchar_t *in)

@@ -835,7 +835,7 @@ static int wcsncasecmp_fallback(const wchar_t *a, const wchar_t *b, size_t count
         }
         else
         {
-            int diff = towlower(*a) - towlower(*b);
+            int diff = towlower(a[i]) - towlower(b[i]);
             if (diff != 0)
                 return diff;        
         }
